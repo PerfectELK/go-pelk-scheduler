@@ -17,8 +17,10 @@ import (
 // example
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	// create scheduler
 	sch := scheduler.New(logger)
 
+	// create jobs
 	j := scheduler.NewJob(
 		"kekw-printer",
 		func(ctx context.Context, arg ...any) {
@@ -26,7 +28,6 @@ func main() {
 		},
 		time.Second*10,
 	)
-
 	l := scheduler.NewJob(
 		"lol-printer",
 		func(ctx context.Context, arg ...any) {
@@ -34,11 +35,11 @@ func main() {
 		},
 		time.Minute*20,
 	)
-
+	// add job to scheduler
 	sch.AddJob(j)
 	sch.AddJob(l)
 
-	//ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(time.Second*30))
+	// make context and gracefully shutdown
 	ctx, cancel := context.WithCancel(context.Background())
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
@@ -48,12 +49,14 @@ func main() {
 	}()
 	defer cancel()
 
+	// open connection to sqlite database
 	db, err := sql.Open("sqlite3", "./storage/jobs.sqlite")
 	if err != nil {
 		panic(err)
 	}
 	defer db.Close()
 
+	// create JobDataStorage instance and register it int scheduler
 	tableName := "jobs"
 	jds, err := storage.NewSqliteJobDataStorage(db, tableName)
 	if err != nil {
@@ -61,6 +64,7 @@ func main() {
 	}
 	sch.SetJobDataStorage(jds)
 
+	// run scheduler until shutdown
 	err = sch.Run(ctx)
 	if err != nil {
 		panic(err)
