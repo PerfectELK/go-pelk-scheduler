@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/PerfectELK/go-pelk-scheduler/pkg/scheduler"
-	_ "github.com/mattn/go-sqlite3"
 	"time"
 )
 
@@ -14,19 +13,13 @@ type SqliteJobDataStorage struct {
 	db        *sql.DB
 }
 
-func NewSqliteJobDataStorage(conn string, jobsTable string) (*SqliteJobDataStorage, error) {
-	db, err := sql.Open("sqlite3", conn)
-	if err != nil {
-		return nil, err
-	}
-
+func NewSqliteJobDataStorage(db *sql.DB, jobsTable string) (*SqliteJobDataStorage, error) {
 	jds := &SqliteJobDataStorage{
-		conn:      conn,
 		jobsTable: jobsTable,
 		db:        db,
 	}
 
-	err = jds.createTables()
+	err := jds.createTables()
 	if err != nil {
 		return nil, err
 	}
@@ -35,17 +28,17 @@ func NewSqliteJobDataStorage(conn string, jobsTable string) (*SqliteJobDataStora
 }
 
 func (s *SqliteJobDataStorage) createTables() error {
-	_, err := s.db.Exec(`
-		CREATE TABLE IF NOT EXISTS jobs (
+	_, err := s.db.Exec(fmt.Sprintf(`
+		CREATE TABLE IF NOT EXISTS %s (
 		    name varchar(255) primary key,
 		    last_started integer default null
 		);
-	`)
+	`, s.jobsTable))
 	return err
 }
 
 func (s *SqliteJobDataStorage) ImportJobsData() []*scheduler.JobData {
-	rows, err := s.db.Query("SELECT * FROM jobs")
+	rows, err := s.db.Query(fmt.Sprintf("SELECT * FROM %s", s.jobsTable))
 	if err != nil {
 		fmt.Println(fmt.Sprintf("sqlite.ImportJobsData error: %s", err))
 		return nil
@@ -71,10 +64,10 @@ func (s *SqliteJobDataStorage) ImportJobsData() []*scheduler.JobData {
 
 func (s *SqliteJobDataStorage) ExportJobsData(jobs []*scheduler.Job) error {
 	for _, j := range jobs {
-		_, err := s.db.Exec(`
-				INSERT INTO jobs (name, last_started) VALUES (?, ?) 
+		_, err := s.db.Exec(fmt.Sprintf(`
+				INSERT INTO %s (name, last_started) VALUES (?, ?) 
 				ON CONFLICT (name) DO UPDATE SET last_started=? WHERE name=? 
-			`,
+			`, s.jobsTable),
 			j.GetName(),
 			j.GetLatStarted().Unix(),
 			j.GetLatStarted().Unix(),

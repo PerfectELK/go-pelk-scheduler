@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"github.com/PerfectELK/go-pelk-scheduler/pkg/scheduler"
 	"github.com/PerfectELK/go-pelk-scheduler/pkg/scheduler/storage"
+	_ "github.com/mattn/go-sqlite3"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -46,10 +48,14 @@ func main() {
 	}()
 	defer cancel()
 
-	conn := "./storage/jobs.sqlite"
-	tableName := "jobs"
+	db, err := sql.Open("sqlite3", "./storage/jobs.sqlite")
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
 
-	jds, err := storage.NewSqliteJobDataStorage(conn, tableName)
+	tableName := "jobs"
+	jds, err := storage.NewSqliteJobDataStorage(db, tableName)
 	if err != nil {
 		panic(err)
 	}
