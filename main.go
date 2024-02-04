@@ -29,7 +29,7 @@ func main() {
 	//ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	conn := "sqlite:conn"
+	conn := "./storage/jobs.sqlite"
 	tableName := "jobs"
 
 	jds, err := storage.NewSqliteJobDataStorage(conn, tableName)
