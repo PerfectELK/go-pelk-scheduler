@@ -11,7 +11,7 @@ type Scheduler struct {
 	jobs   []*Job
 	wg     sync.WaitGroup
 	logger *slog.Logger
-	jdi    JobDataStorage
+	jds    JobDataStorage
 }
 
 func New(logger *slog.Logger) *Scheduler {
@@ -21,16 +21,16 @@ func New(logger *slog.Logger) *Scheduler {
 }
 
 func (s *Scheduler) SetJobDataStorage(jdi JobDataStorage) {
-	s.jdi = jdi
+	s.jds = jdi
 }
 
 func (s *Scheduler) jobDataImport() {
-	if s.jdi == nil {
+	if s.jds == nil {
 		s.logger.Info("scheduler.jobDataImport: JobDataStorage is nil, skipped")
 		return
 	}
-	jobData := s.jdi.importJobsData()
-	if len(jobData) == 0 {
+	jobData := s.jds.ImportJobsData()
+	if jobData != nil || len(jobData) == 0 {
 		return
 	}
 	jobMap := make(map[string]*Job)
@@ -53,7 +53,7 @@ func (s *Scheduler) AddJob(j *Job) {
 }
 
 // Run all jobs until shutdown
-func (s *Scheduler) Run(ctx context.Context) {
+func (s *Scheduler) Run(ctx context.Context) error {
 	s.jobDataImport()
 	tick := time.NewTicker(time.Second)
 forLoop:
@@ -70,6 +70,8 @@ forLoop:
 	}
 
 	s.wg.Wait()
+	err := s.jds.ExportJobsData(s.jobs)
+	return err
 }
 
 type JobData struct {
@@ -78,6 +80,6 @@ type JobData struct {
 }
 
 type JobDataStorage interface {
-	importJobsData() []*JobData
-	exportJobsData(jobs []*Job) bool
+	ImportJobsData() []*JobData
+	ExportJobsData(jobs []*Job) error
 }

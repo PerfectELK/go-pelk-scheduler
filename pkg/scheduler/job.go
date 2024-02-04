@@ -62,3 +62,11 @@ func (j *Job) run() {
 func (j *Job) IsRan() bool {
 	return j.ran
 }
+
+func (j *Job) GetName() string {
+	return j.name
+}
+
+func (j *Job) GetLatStarted() time.Time {
+	return j.lastStarted
+}
