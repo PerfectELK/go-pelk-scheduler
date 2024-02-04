@@ -25,8 +25,8 @@ func main() {
 
 	sch.AddJob(j)
 
-	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(time.Second*6))
-	//ctx, cancel := context.WithCancel(context.Background())
+	//ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(time.Second*6))
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	conn := "./storage/jobs.sqlite"
