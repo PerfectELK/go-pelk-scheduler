@@ -56,7 +56,7 @@ func main() {
 	}
 	defer db.Close()
 
-	// create JobDataStorage instance and register it int scheduler
+	// create JobDataStorage instance and register it in scheduler
 	tableName := "jobs"
 	jds, err := storage.NewSqliteJobDataStorage(db, tableName)
 	if err != nil {
