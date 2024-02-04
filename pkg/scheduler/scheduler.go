@@ -30,7 +30,7 @@ func (s *Scheduler) jobDataImport() {
 		return
 	}
 	jobData := s.jds.ImportJobsData()
-	if jobData != nil || len(jobData) == 0 {
+	if jobData == nil || len(jobData) == 0 {
 		return
 	}
 	jobMap := make(map[string]*Job)
@@ -38,11 +38,11 @@ func (s *Scheduler) jobDataImport() {
 		jobMap[j.name] = j
 	}
 	for _, jd := range jobData {
-		j, ok := jobMap[jd.name]
+		j, ok := jobMap[jd.Name]
 		if !ok {
 			continue
 		}
-		j.lastStarted = jd.lastStarted
+		j.lastStarted = jd.LastStarted
 	}
 }
 
@@ -75,8 +75,8 @@ forLoop:
 }
 
 type JobData struct {
-	name        string
-	lastStarted time.Time
+	Name        string
+	LastStarted time.Time
 }
 
 type JobDataStorage interface {

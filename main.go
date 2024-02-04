@@ -7,6 +7,8 @@ import (
 	"github.com/PerfectELK/go-pelk-scheduler/pkg/scheduler/storage"
 	"log/slog"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
@@ -23,10 +25,25 @@ func main() {
 		time.Second*10,
 	)
 
-	sch.AddJob(j)
+	l := scheduler.NewJob(
+		"lol-printer",
+		func(ctx context.Context, arg ...any) {
+			fmt.Println("lol")
+		},
+		time.Minute*20,
+	)
 
-	//ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(time.Second*6))
+	sch.AddJob(j)
+	sch.AddJob(l)
+
+	//ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(time.Second*30))
 	ctx, cancel := context.WithCancel(context.Background())
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		cancel()
+	}()
 	defer cancel()
 
 	conn := "./storage/jobs.sqlite"
