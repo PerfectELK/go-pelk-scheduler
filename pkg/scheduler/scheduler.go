@@ -55,7 +55,7 @@ func (s *Scheduler) AddJob(j *Job) {
 // Run all jobs until shutdown
 func (s *Scheduler) Run(ctx context.Context) error {
 	s.jobDataImport()
-	tick := time.NewTicker(time.Second)
+	tick := time.NewTicker(time.Millisecond * 100)
 forLoop:
 	for {
 		select {
